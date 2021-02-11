@@ -1,0 +1,16 @@
+ECE435 -- Spring 2021
+
+Name: Caleb Jewell
+
+Describe the "something cool" that you did:
+	I modified the server to get the port number from the command line and 
+modified the client to get the port and hostname from the command line
+
+Answer to Questions in Part 5:
+
+a) Layer 1 deals with electrons, pins, volts, timing, frequency, topology, and bandwidth
+
+b) Layer 3 dealsn with the network which includes how packages are routed 
+	from one network to anther. 
+
+
