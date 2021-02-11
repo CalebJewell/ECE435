@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <errno.h>
 
+#include <fcntl.h>
+
 #include <sys/socket.h>
 #include <netinet/in.h>
 
@@ -20,6 +22,12 @@ int main(int argc, char **argv) {
 	int n;
 	socklen_t client_len;
 	char buffer[BUFFER_SIZE];
+
+	/* My Variables */ 
+	char *str;
+	char *fileptr;
+	char ff[100]; 
+	int fd, i = 0;
 
 	printf("Starting server on port %d\n",port);
 
@@ -67,13 +75,15 @@ wait_for_connection:
 		exit(1);
 	}
 
+
+
 	while(1) {
 		/* Someone connected!  Let's try to read BUFFER_SIZE-1 bytes */
 		memset(buffer,0,BUFFER_SIZE);
 		n = read(new_socket_fd,buffer,(BUFFER_SIZE-1));
 
 		if (n==0) {
-			fprintf(stderr,"Connection to client lost\n\n");
+			fprintf(stderr,"Connecion to client lost\n\n");
 			break;
 		}
 		else if (n<0) {
@@ -81,25 +91,49 @@ wait_for_connection:
 				strerror(errno));
 		}
 		
-		
-
-
 		/* Print the message we received */
 		printf("Message received: %s\n",buffer);
 
-		int init_size = strlen(buffer);
+		str = strstr(buffer,"GET");
 
-		char *ptr = strtok(buffer," ");
+		if (str != NULL) {
+			
+			memset(ff,0,100);
+		
+			/* skip all characters till the first '/' */
+			while(*str != '/') str++;
+			str++;
 
-		printf("char: %s\n",ptr);
+			/* Store the .html file inside another variable */ 
+			i = 0;
+			while(*str != ' '){
+				printf("%c",*str);
+				ff[i] = *str;
+				i++;
+				str++;
+			}
+	
+			ff[i] = '\0';
 
+			printf("******File*******: %s",ff);
+			printf("\n");
+		}
+	
+		/* open the file and check for errors */ 
+		fd = open(ff,O_RDWR);
+
+		if (fd == '\0') {
+			printf("Error opening file! \n");
+			break;
+		}
+
+		
 		/* Send a response */
 		n = write(new_socket_fd,"Got your message, thanks!\r\n\r\n",29);
 		if (n<0) {
 			fprintf(stderr,"Error writing. %s\n",
 				strerror(errno));
 		}
-
 
 	}
 
