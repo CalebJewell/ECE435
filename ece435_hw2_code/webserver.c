@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <time.h>
 
 #include <fcntl.h>
 
@@ -13,6 +14,7 @@
 
 /* Default port to listen on */
 #define DEFAULT_PORT	8080
+#define  Size 50
 
 int main(int argc, char **argv) {
 
@@ -28,8 +30,22 @@ int main(int argc, char **argv) {
 	char *fileptr;
 	char ff[100]; 
 	int fd, i = 0;
-
-	printf("Starting server on port %d\n",port);
+	
+	time_t t ; 
+	struct tm *tmp ; 
+	char MY_TIME[Size]; 
+	time( &t ); 
+	      
+	//localtime() uses the time pointed by t , 
+	// to fill a tm structure with the  
+	// values that represent the  
+	// corresponding local time. 
+      
+	tmp = localtime( &t ); 
+      
+	// using strftime to display time 
+	strftime(MY_TIME, sizeof(MY_TIME), "%x - %I:%M%p", tmp);
+	printf("Formatted date & time : %s\n", MY_TIME ); 
 
 	/* Open a socket to listen on */
 	/* AF_INET means an IPv4 connection */
