@@ -3,9 +3,10 @@
 #include <string.h>
 #include <stdlib.h>
 #include <errno.h>
-#include <time.h>
 
+#include <time.h>
 #include <fcntl.h>
+#include <sys/stat.h>
 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -27,25 +28,21 @@ int main(int argc, char **argv) {
 
 	/* My Variables */ 
 	char *str;
-	char *fileptr;
 	char ff[100]; 
+	char lmod[50];
+	char data[256];
+	char http[100];
+	char gmt_time[50];
+	struct stat stats;
 	int fd, i = 0;
+
+	/* grab time */
+	time_t result = time(NULL);
+	strftime(gmt_time,50,"%a, %d %b %Y %H:%M:%S GMT", gmtime(&result));
+	printf("%s\n",gmt_time);
+	/* ---------------------------------------- */
 	
-	time_t t ; 
-	struct tm *tmp ; 
-	char MY_TIME[Size]; 
-	time( &t ); 
-	      
-	//localtime() uses the time pointed by t , 
-	// to fill a tm structure with the  
-	// values that represent the  
-	// corresponding local time. 
-      
-	tmp = localtime( &t ); 
-      
-	// using strftime to display time 
-	strftime(MY_TIME, sizeof(MY_TIME), "%x - %I:%M%p", tmp);
-	printf("Formatted date & time : %s\n", MY_TIME ); 
+
 
 	/* Open a socket to listen on */
 	/* AF_INET means an IPv4 connection */
@@ -123,7 +120,6 @@ wait_for_connection:
 			/* Store the .html file inside another variable */ 
 			i = 0;
 			while(*str != ' '){
-				printf("%c",*str);
 				ff[i] = *str;
 				i++;
 				str++;
@@ -131,19 +127,33 @@ wait_for_connection:
 	
 			ff[i] = '\0';
 
-			printf("******File*******: %s",ff);
+			printf("FILE: %s",ff);
 			printf("\n");
 		}
-	
 		/* open the file and check for errors */ 
 		fd = open(ff,O_RDWR);
+		
+		stat(ff,&stats);
+		int size = stats.st_size;
+		//printf("Size: %d\n",size);
+		strftime(lmod,50,"%a, %d %b %Y %H:%M:%S GMT", gmtime(&(stats.st_mtime)));
+		//printf("\tLast Modified: %s",lmod);
 
 		if (fd == '\0') {
 			printf("Error opening file! \n");
 			break;
 		}
+	
+		sprintf(data,"HTTP/1.1 200 ok\r\nDate: %s\r\nServer: ECE435\r\nLast-Modified: %s \r\nContent-Length: %d\r\nContent-Type: text/html\r\n\r\n",gmt_time,lmod,size);
+	
+		n = write(new_socket_fd,data,strlen(data));
 
-		
+		read(fd,http,100);
+
+		n = write(new_socket_fd,http,strlen(http));
+	
+		close(fd);
+
 		/* Send a response */
 		n = write(new_socket_fd,"Got your message, thanks!\r\n\r\n",29);
 		if (n<0) {
@@ -152,9 +162,7 @@ wait_for_connection:
 		}
 
 	}
-
 	close(new_socket_fd);
-
 	printf("Done connection, go back and wait for another\n\n");
 
 	goto wait_for_connection;
