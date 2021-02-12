@@ -1,8 +1,13 @@
 ECE435 HW#2 -- Spring 2021
 
-Name:
+Name: Caleb Jewell
 
 Answers to Question 2:
+	a)
+	i. 404 - The server cannot find the the resource
+	ii. The server attempts to brew coffee with a teapot.... funny haha
+	iii. Unavailable because of legal reasons (censorship as an example) 
 
-
-
+	b) 
+	i. The maine.edu website is running a nginx server which is a free, high performance webserver (I have this on my pi too)
+	ii. No because telnet is no longer a text based protocol so it will not connect to HTTP/2. If I run GET / HTTP/2 I get a 505 Http version not supported.  

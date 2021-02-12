@@ -30,8 +30,7 @@ int main(int argc, char **argv) {
 	char *str;
 	char ff[100]; 
 	char lmod[50];
-	char data[256];
-	char http[100];
+	char data[400];
 	char gmt_time[50];
 	struct stat stats;
 	int fd, i = 0;
@@ -39,10 +38,10 @@ int main(int argc, char **argv) {
 	/* grab time */
 	time_t result = time(NULL);
 	strftime(gmt_time,50,"%a, %d %b %Y %H:%M:%S GMT", gmtime(&result));
-	printf("%s\n",gmt_time);
+	//printf("%s\n",gmt_time);
 	/* ---------------------------------------- */
 	
-
+	printf("Starting server on port %d\n",port);
 
 	/* Open a socket to listen on */
 	/* AF_INET means an IPv4 connection */
@@ -109,6 +108,7 @@ wait_for_connection:
 
 		str = strstr(buffer,"GET");
 
+		/* if stye conatins GET parse the data */ 
 		if (str != NULL) {
 			
 			memset(ff,0,100);
@@ -129,37 +129,53 @@ wait_for_connection:
 
 			printf("FILE: %s",ff);
 			printf("\n");
-		}
-		/* open the file and check for errors */ 
-		fd = open(ff,O_RDWR);
-		
-		stat(ff,&stats);
-		int size = stats.st_size;
-		//printf("Size: %d\n",size);
-		strftime(lmod,50,"%a, %d %b %Y %H:%M:%S GMT", gmtime(&(stats.st_mtime)));
-		//printf("\tLast Modified: %s",lmod);
 
-		if (fd == '\0') {
-			printf("Error opening file! \n");
+			/* open the file and check for errors */ 
+			fd = open(ff,O_RDWR);
+	
+			/* retreive stats for the file in the GET request */
+			stat(ff,&stats);
+			int size = stats.st_size;
+			char http[size];
+			strftime(lmod,50,"%a, %d %b %Y %H:%M:%S GMT", gmtime(&(stats.st_mtime)));
+			//printf("\tLast Modified: %s",lmod);
+
+			if (fd == '\0') {
+				printf("Error opening file! \n");
+				break;
+			}
+		
+			sprintf(data,"HTTP/1.1 200 OK\r\nDate: %s\r\nServer: ECE435\r\nLast-Modified: %s \r\nContent-Length: %d\r\nContent-Type: text/html\r\n\r\n",gmt_time,lmod,size);
+		
+			n = write(new_socket_fd,data,strlen(data));
+
+			int rd = read(fd,http,size);
+			
+			/* make sure no errors reading the file */ 
+			if (rd < 0) {
+				printf("Error reading the file!\n");
+				close(fd);
+				break;
+			}
+
+			n = write(new_socket_fd,http,strlen(http));
+	
+			close(fd);
+		}
+
+		else {
+			sprintf(data,"HTTP/1.1 404 Not Found\r\nDate: %s\r\nServer: ECE435\r\nContent-Length: 100\r\nConnection: close\r\nContent-Type: text/html; charset=iso-8859-1\r\n\r\n<html><head>\r\n<title>404 Not Found </title>\r\n</head><body>\r\n<h1>Not Found</h1>\r\n<p>The requested URL was not found on the server.<br />\r\n</p>\r\n</body></html>\r\n",gmt_time);
 			break;
 		}
-	
-		sprintf(data,"HTTP/1.1 200 ok\r\nDate: %s\r\nServer: ECE435\r\nLast-Modified: %s \r\nContent-Length: %d\r\nContent-Type: text/html\r\n\r\n",gmt_time,lmod,size);
-	
-		n = write(new_socket_fd,data,strlen(data));
 
-		read(fd,http,100);
 
-		n = write(new_socket_fd,http,strlen(http));
-	
-		close(fd);
 
-		/* Send a response */
+		/* Send a response 
 		n = write(new_socket_fd,"Got your message, thanks!\r\n\r\n",29);
 		if (n<0) {
 			fprintf(stderr,"Error writing. %s\n",
 				strerror(errno));
-		}
+		}*/
 
 	}
 	close(new_socket_fd);
